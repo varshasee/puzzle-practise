@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-green-400 flex items-center justify-center p-6">
@@ -16,20 +18,29 @@ export default function HomePage() {
         </p>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="border border-green-700 p-4">
+          <Link
+            href="/today"
+            className="border border-green-700 p-4 block hover:border-green-400"
+          >
             <p className="text-xs uppercase mb-2 text-green-500">Today</p>
             <p className="text-sm text-green-300">Start today&apos;s puzzles</p>
-          </div>
+          </Link>
 
-          <div className="border border-green-700 p-4">
+          <Link
+            href="/progress"
+            className="border border-green-700 p-4 block hover:border-green-400"
+          >
             <p className="text-xs uppercase mb-2 text-green-500">Progress</p>
             <p className="text-sm text-green-300">View streaks and readiness</p>
-          </div>
+          </Link>
 
-          <div className="border border-green-700 p-4">
+          <Link
+            href="/archive"
+            className="border border-green-700 p-4 block hover:border-green-400"
+          >
             <p className="text-xs uppercase mb-2 text-green-500">Archive</p>
             <p className="text-sm text-green-300">Browse past practice days</p>
-          </div>
+          </Link>
         </div>
       </div>
     </main>
