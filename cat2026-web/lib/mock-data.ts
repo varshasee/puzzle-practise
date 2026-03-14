@@ -23,7 +23,7 @@ export const todaysPuzzles: TodayPuzzle[] = [
     title: "Main Timed Puzzle",
     type: "Kakuro",
     difficulty: "Medium",
-    status: "Not Started",
+    status: "In Progress",
   },
   {
     id: "sudoku-challenge",
