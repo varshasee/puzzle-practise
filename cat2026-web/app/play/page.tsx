@@ -1,3 +1,4 @@
+import Link from "next/link";
 type PlayPageProps = {
   searchParams: Promise<{
     puzzle?: string;
@@ -34,6 +35,12 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       <div className="mx-auto max-w-5xl border border-green-500 p-6">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
+            <Link
+  href="/today"
+  className="text-xs uppercase tracking-[0.3em] text-green-500 hover:text-green-300"
+>
+  Back to Today
+</Link>
             <p className="text-xs uppercase tracking-[0.3em] text-green-500 mb-2">
               Play
             </p>
