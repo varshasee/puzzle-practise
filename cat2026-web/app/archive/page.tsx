@@ -17,7 +17,17 @@ export default function ArchivePage() {
               className="border border-green-700 p-4 flex items-center justify-between"
             >
               <p className="text-sm text-green-300">{day.date}</p>
-              <p className="text-xs uppercase text-green-500">{day.status}</p>
+              <p
+  className={`text-xs uppercase ${
+    day.status === "Completed"
+      ? "text-green-400"
+      : day.status === "In Progress"
+      ? "text-yellow-400"
+      : "text-red-400"
+  }`}
+>
+  {day.status}
+</p>
             </div>
           ))}
         </div>
