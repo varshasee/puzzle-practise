@@ -1,7 +1,4 @@
-const consistencyDays = Array.from({ length: 21 }, (_, i) => ({
-  id: i,
-  done: i % 3 !== 0,
-}));
+import { consistencyDays } from "@/lib/mock-data";
 
 export default function ProgressPage() {
   return (

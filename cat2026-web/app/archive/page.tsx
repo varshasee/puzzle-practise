@@ -1,10 +1,4 @@
-const archiveDays = [
-  { date: "2026-03-14", status: "Completed" },
-  { date: "2026-03-15", status: "Completed" },
-  { date: "2026-03-16", status: "Missed" },
-  { date: "2026-03-17", status: "Completed" },
-  { date: "2026-03-18", status: "In Progress" },
-];
+import { archiveDays } from "@/lib/mock-data";
 
 export default function ArchivePage() {
   return (

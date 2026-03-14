@@ -1,36 +1,6 @@
 import Link from "next/link";
+import { todaysPuzzles } from "@/lib/mock-data";
 
-type PuzzleCard = {
-  id: string;
-  title: string;
-  type: "Sudoku" | "Kakuro";
-  difficulty: "Easy" | "Medium" | "Hard";
-  status: "Not Started" | "In Progress" | "Completed";
-};
-
-const todaysPuzzles: PuzzleCard[] = [
-  {
-    id: "sudoku-warmup",
-    title: "Warm-up Grid",
-    type: "Sudoku",
-    difficulty: "Easy",
-    status: "Not Started",
-  },
-  {
-    id: "kakuro-main",
-    title: "Main Timed Puzzle",
-    type: "Kakuro",
-    difficulty: "Medium",
-    status: "Not Started",
-  },
-  {
-    id: "sudoku-challenge",
-    title: "Challenge Puzzle",
-    type: "Sudoku",
-    difficulty: "Hard",
-    status: "Not Started",
-  },
-];
 
 export default function TodayPage() {
   const today = new Date().toLocaleDateString("en-CA");
@@ -76,7 +46,7 @@ export default function TodayPage() {
                 </div>
 
                 <Link
-                  href="/play"
+                  href={`/play?puzzle=${puzzle.id}`}
                   className="border border-green-500 px-4 py-2 text-sm uppercase tracking-[0.2em] hover:bg-green-500 hover:text-black transition inline-block"
                 >
                   Start
