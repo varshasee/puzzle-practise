@@ -1,4 +1,16 @@
-export const todaysPuzzles = [
+export type PuzzleType = "Sudoku" | "Kakuro";
+export type PuzzleDifficulty = "Easy" | "Medium" | "Hard";
+export type PuzzleStatus = "Not Started" | "In Progress" | "Completed";
+
+export type TodayPuzzle = {
+  id: string;
+  title: string;
+  type: PuzzleType;
+  difficulty: PuzzleDifficulty;
+  status: PuzzleStatus;
+};
+
+export const todaysPuzzles: TodayPuzzle[] = [
   {
     id: "sudoku-warmup",
     title: "Warm-up Grid",

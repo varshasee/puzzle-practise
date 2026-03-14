@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { todaysPuzzles } from "@/lib/mock-data";
-
+import { PuzzleCard } from "@/components/puzzle-card";
 
 export default function TodayPage() {
   const today = new Date().toLocaleDateString("en-CA");
@@ -28,31 +27,14 @@ export default function TodayPage() {
 
         <div className="grid gap-4">
           {todaysPuzzles.map((puzzle) => (
-            <div
+            <PuzzleCard
               key={puzzle.id}
-              className="border border-green-700 p-4 md:p-5"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-green-500 mb-2">
-                    {puzzle.type}
-                  </p>
-                  <h2 className="text-xl font-bold mb-2">{puzzle.title}</h2>
-
-                  <div className="flex flex-wrap gap-3 text-sm text-green-300">
-                    <span>Difficulty: {puzzle.difficulty}</span>
-                    <span>Status: {puzzle.status}</span>
-                  </div>
-                </div>
-
-                <Link
-                  href={`/play?puzzle=${puzzle.id}`}
-                  className="border border-green-500 px-4 py-2 text-sm uppercase tracking-[0.2em] hover:bg-green-500 hover:text-black transition inline-block"
-                >
-                  Start
-                </Link>
-              </div>
-            </div>
+              id={puzzle.id}
+              title={puzzle.title}
+              type={puzzle.type}
+              difficulty={puzzle.difficulty}
+              status={puzzle.status}
+            />
           ))}
         </div>
       </div>
