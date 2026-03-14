@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type PuzzleCard = {
   id: string;
   title: string;
@@ -73,9 +75,12 @@ export default function TodayPage() {
                   </div>
                 </div>
 
-                <button className="border border-green-500 px-4 py-2 text-sm uppercase tracking-[0.2em] hover:bg-green-500 hover:text-black transition">
+                <Link
+                  href="/play"
+                  className="border border-green-500 px-4 py-2 text-sm uppercase tracking-[0.2em] hover:bg-green-500 hover:text-black transition inline-block"
+                >
                   Start
-                </button>
+                </Link>
               </div>
             </div>
           ))}
