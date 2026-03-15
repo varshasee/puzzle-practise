@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { markAssignmentInProgress, submitAttempt } from "./actions";
 
 type PlayPageProps = {
   searchParams: Promise<{
@@ -53,8 +54,8 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     return (
       <main className="min-h-screen bg-black text-green-400 p-6">
         <div className="mx-auto max-w-4xl border border-green-500 p-6">
-          <p className="text-sm text-green-300 mb-4">Assignment not found.</p>
-          <pre className="text-xs whitespace-pre-wrap border border-green-700 p-4 mb-4 text-green-300">
+          <p className="mb-4 text-sm text-green-300">Assignment not found.</p>
+          <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
             {JSON.stringify(
               {
                 assignmentId,
@@ -74,6 +75,8 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     );
   }
 
+  await markAssignmentInProgress(assignment.id);
+
   const { data: puzzle, error: puzzleError } = await supabase
     .from("puzzles")
     .select("id, puzzle_type, difficulty_band, grid_payload")
@@ -84,8 +87,8 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     return (
       <main className="min-h-screen bg-black text-green-400 p-6">
         <div className="mx-auto max-w-4xl border border-green-500 p-6">
-          <p className="text-sm text-green-300 mb-4">Puzzle not found.</p>
-          <pre className="text-xs whitespace-pre-wrap border border-green-700 p-4 mb-4 text-green-300">
+          <p className="mb-4 text-sm text-green-300">Puzzle not found.</p>
+          <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
             {JSON.stringify(
               {
                 assignmentId,
@@ -143,9 +146,20 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             <button className="border border-green-700 px-4 py-2 text-xs uppercase">
               Reset
             </button>
-            <button className="border border-green-500 px-4 py-2 text-xs uppercase hover:bg-green-500 hover:text-black">
-              Submit
-            </button>
+
+            <form
+              action={async () => {
+                "use server";
+                await submitAttempt({
+                  assignmentId: assignment.id,
+                  puzzleId: puzzle.id,
+                });
+              }}
+            >
+              <button className="border border-green-500 px-4 py-2 text-xs uppercase hover:bg-green-500 hover:text-black">
+                Submit
+              </button>
+            </form>
           </div>
         </div>
 
