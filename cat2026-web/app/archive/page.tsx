@@ -1,6 +1,17 @@
 import { archiveDays } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
+export default async function ArchivePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function ArchivePage() {
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
     <main className="min-h-screen bg-black text-green-400 p-6">
       <div className="mx-auto max-w-5xl border border-green-500 p-6">

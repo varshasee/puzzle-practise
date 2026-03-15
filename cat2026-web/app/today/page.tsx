@@ -39,7 +39,7 @@ export default async function TodayPage() {
         : assignment.puzzles;
 
       return {
-        id: puzzle?.id ?? assignment.id,
+        id: assignment.id,
         title:
           puzzle?.puzzle_type === "kakuro" ? "Daily Kakuro" : "Daily Sudoku",
         type: puzzle?.puzzle_type === "kakuro" ? "Kakuro" : "Sudoku",

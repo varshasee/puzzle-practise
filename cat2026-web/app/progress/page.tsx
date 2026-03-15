@@ -1,6 +1,18 @@
 import { consistencyDays } from "@/lib/mock-data";
+import { StatsCard } from "@/components/stats-card";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
+export default async function ProgressPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function ProgressPage() {
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
     <main className="min-h-screen bg-black text-green-400 p-6">
       <div className="mx-auto max-w-5xl border border-green-500 p-6">
@@ -11,20 +23,9 @@ export default function ProgressPage() {
         <h1 className="text-3xl font-bold mb-6">Consistency Tracker</h1>
 
         <div className="grid gap-4 md:grid-cols-3 mb-8">
-          <div className="border border-green-700 p-4">
-            <p className="text-xs uppercase text-green-500 mb-2">Current Streak</p>
-            <p className="text-3xl font-bold">6</p>
-          </div>
-
-          <div className="border border-green-700 p-4">
-            <p className="text-xs uppercase text-green-500 mb-2">Best Streak</p>
-            <p className="text-3xl font-bold">11</p>
-          </div>
-
-          <div className="border border-green-700 p-4">
-            <p className="text-xs uppercase text-green-500 mb-2">Readiness</p>
-            <p className="text-3xl font-bold">72%</p>
-          </div>
+          <StatsCard label="Current Streak" value="6" />
+          <StatsCard label="Best Streak" value="11" />
+          <StatsCard label="Readiness" value="72%" />
         </div>
 
         <div className="border border-green-700 p-4">
