@@ -4,6 +4,25 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+type AssignmentWithPuzzle = {
+  id: string;
+  status: string;
+  slot_type: string;
+  effective_difficulty: number;
+  puzzles:
+    | {
+        id: string;
+        puzzle_type: "sudoku" | "kakuro";
+        difficulty_band: string;
+      }
+    | {
+        id: string;
+        puzzle_type: "sudoku" | "kakuro";
+        difficulty_band: string;
+      }[]
+    | null;
+};
+
 export default async function TodayPage() {
   const supabase = await createClient();
   const {
@@ -21,7 +40,7 @@ export default async function TodayPage() {
     .select(`
       id,
       status,
-      planned_difficulty,
+      slot_type,
       effective_difficulty,
       puzzles (
         id,
@@ -30,10 +49,11 @@ export default async function TodayPage() {
       )
     `)
     .eq("user_id", user.id)
-    .eq("assignment_date", today);
+    .eq("assignment_date", today)
+    .order("created_at", { ascending: true });
 
   const cards =
-    assignments?.map((assignment) => {
+    (assignments as AssignmentWithPuzzle[] | null)?.map((assignment) => {
       const puzzle = Array.isArray(assignment.puzzles)
         ? assignment.puzzles[0]
         : assignment.puzzles;
@@ -43,6 +63,14 @@ export default async function TodayPage() {
         title:
           puzzle?.puzzle_type === "kakuro" ? "Daily Kakuro" : "Daily Sudoku",
         type: puzzle?.puzzle_type === "kakuro" ? "Kakuro" : "Sudoku",
+        slotType:
+          assignment.slot_type === "warmup"
+            ? "Warmup"
+            : assignment.slot_type === "timed"
+            ? "Timed"
+            : assignment.slot_type === "challenge"
+            ? "Challenge"
+            : "Recovery",
         difficulty:
           assignment.effective_difficulty >= 7
             ? "Hard"
@@ -79,7 +107,7 @@ export default async function TodayPage() {
 
           <div className="border border-green-700 px-4 py-3 text-sm">
             <p className="text-green-500 uppercase text-xs mb-1">Target</p>
-            <p className="text-green-300">Live assignments from Supabase</p>
+            <p className="text-green-300">Warmup + Timed + Challenge</p>
           </div>
         </div>
 
@@ -95,6 +123,7 @@ export default async function TodayPage() {
                 status={
                   puzzle.status as "Not Started" | "In Progress" | "Completed"
                 }
+                slotType={puzzle.slotType}
               />
             ))
           ) : (

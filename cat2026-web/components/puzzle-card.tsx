@@ -1,16 +1,12 @@
 import Link from "next/link";
-import type {
-  PuzzleType,
-  PuzzleDifficulty,
-  PuzzleStatus,
-} from "@/lib/mock-data";
 
 type PuzzleCardProps = {
   id: string;
   title: string;
-  type: PuzzleType;
-  difficulty: PuzzleDifficulty;
-  status: PuzzleStatus;
+  type: "Sudoku" | "Kakuro";
+  difficulty: "Easy" | "Medium" | "Hard";
+  status: "Not Started" | "In Progress" | "Completed";
+  slotType?: string;
 };
 
 export function PuzzleCard({
@@ -19,14 +15,23 @@ export function PuzzleCard({
   type,
   difficulty,
   status,
+  slotType,
 }: PuzzleCardProps) {
   return (
     <div className="border border-green-700 p-4 md:p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-green-500 mb-2">
-            {type}
-          </p>
+          <div className="mb-2 flex flex-wrap gap-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-green-500">
+              {type}
+            </p>
+            {slotType ? (
+              <p className="text-xs uppercase tracking-[0.2em] text-green-300">
+                {slotType}
+              </p>
+            ) : null}
+          </div>
+
           <h2 className="text-xl font-bold mb-2">{title}</h2>
 
           <div className="flex flex-wrap gap-3 text-sm text-green-300">
