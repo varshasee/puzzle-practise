@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { markAssignmentInProgress, submitAttempt } from "./actions";
 
 type PlayPageProps = {
@@ -52,7 +52,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
 
   if (assignmentError || !assignment) {
     return (
-      <main className="min-h-screen bg-black text-green-400 p-6">
+      <main className="min-h-screen bg-black p-6 text-green-400">
         <div className="mx-auto max-w-4xl border border-green-500 p-6">
           <p className="mb-4 text-sm text-green-300">Assignment not found.</p>
           <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
@@ -85,7 +85,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
 
   if (puzzleError || !puzzle) {
     return (
-      <main className="min-h-screen bg-black text-green-400 p-6">
+      <main className="min-h-screen bg-black p-6 text-green-400">
         <div className="mx-auto max-w-4xl border border-green-500 p-6">
           <p className="mb-4 text-sm text-green-300">Puzzle not found.</p>
           <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
@@ -112,7 +112,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
   const grid = puzzle.grid_payload?.grid ?? [];
 
   return (
-    <main className="min-h-screen bg-black text-green-400 p-6">
+    <main className="min-h-screen bg-black p-6 text-green-400">
       <div className="mx-auto max-w-5xl border border-green-500 p-6">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
@@ -140,10 +140,17 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
           </div>
 
           <div className="flex gap-2">
-            <button className="border border-green-700 px-4 py-2 text-xs uppercase">
+            <button
+              type="button"
+              className="border border-green-700 px-4 py-2 text-xs uppercase"
+            >
               Pause
             </button>
-            <button className="border border-green-700 px-4 py-2 text-xs uppercase">
+
+            <button
+              type="button"
+              className="border border-green-700 px-4 py-2 text-xs uppercase"
+            >
               Reset
             </button>
 
@@ -156,7 +163,10 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                 });
               }}
             >
-              <button className="border border-green-500 px-4 py-2 text-xs uppercase hover:bg-green-500 hover:text-black">
+              <button
+                type="submit"
+                className="border border-green-500 px-4 py-2 text-xs uppercase hover:bg-green-500 hover:text-black"
+              >
                 Submit
               </button>
             </form>
@@ -178,10 +188,12 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
 
             <div className="border border-green-700 p-4">
               <p className="mb-4 text-xs uppercase text-green-500">Controls</p>
+
               <div className="grid grid-cols-3 gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                   <button
                     key={num}
+                    type="button"
                     className="border border-green-700 py-3 hover:border-green-400"
                   >
                     {num}
@@ -191,9 +203,43 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             </div>
           </div>
         ) : (
-          <div className="border border-green-700 p-4 text-sm text-green-300">
-            Kakuro grid loading from Supabase works, but Kakuro rendering still
-            needs its final board UI.
+          <div className="grid gap-8 md:grid-cols-[1fr_220px]">
+            <div
+              className="grid border border-green-500"
+              style={{ gridTemplateColumns: `repeat(${grid[0]?.length ?? 5}, minmax(0, 1fr))` }}
+            >
+              {grid.flat().map((cell, index) => {
+                const isBlock = cell === "#";
+                const isClue = typeof cell === "string" && cell.includes("\\");
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex aspect-square items-center justify-center border border-green-900 text-xs font-semibold ${
+                      isBlock ? "bg-green-950" : ""
+                    } ${isClue ? "bg-green-900 text-green-200" : ""}`}
+                  >
+                    {isBlock ? "" : cell}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border border-green-700 p-4">
+              <p className="mb-4 text-xs uppercase text-green-500">Controls</p>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    className="border border-green-700 py-3 hover:border-green-400"
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
