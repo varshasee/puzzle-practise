@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { markAssignmentInProgress, submitAttempt } from "./actions";
+import { PlayGrid } from "@/components/play-grid";
 
 type PlayPageProps = {
   searchParams: Promise<{
@@ -20,6 +21,9 @@ type PuzzleRow = {
   puzzle_type: "sudoku" | "kakuro";
   difficulty_band: string;
   grid_payload: {
+    grid: string[][];
+  };
+  solution_payload: {
     grid: string[][];
   };
 };
@@ -79,7 +83,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
 
   const { data: puzzle, error: puzzleError } = await supabase
     .from("puzzles")
-    .select("id, puzzle_type, difficulty_band, grid_payload")
+    .select("id, puzzle_type, difficulty_band, grid_payload, solution_payload")
     .eq("id", assignment.puzzle_id)
     .maybeSingle<PuzzleRow>();
 
@@ -173,75 +177,13 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
           </div>
         </div>
 
-        {!isKakuro ? (
-          <div className="grid gap-8 md:grid-cols-[1fr_220px]">
-            <div className="grid grid-cols-9 border border-green-500">
-              {grid.flat().map((cell, index) => (
-                <div
-                  key={index}
-                  className="flex aspect-square items-center justify-center border border-green-900 text-lg font-semibold"
-                >
-                  {cell}
-                </div>
-              ))}
-            </div>
-
-            <div className="border border-green-700 p-4">
-              <p className="mb-4 text-xs uppercase text-green-500">Controls</p>
-
-              <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    className="border border-green-700 py-3 hover:border-green-400"
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-8 md:grid-cols-[1fr_220px]">
-            <div
-              className="grid border border-green-500"
-              style={{ gridTemplateColumns: `repeat(${grid[0]?.length ?? 5}, minmax(0, 1fr))` }}
-            >
-              {grid.flat().map((cell, index) => {
-                const isBlock = cell === "#";
-                const isClue = typeof cell === "string" && cell.includes("\\");
-
-                return (
-                  <div
-                    key={index}
-                    className={`flex aspect-square items-center justify-center border border-green-900 text-xs font-semibold ${
-                      isBlock ? "bg-green-950" : ""
-                    } ${isClue ? "bg-green-900 text-green-200" : ""}`}
-                  >
-                    {isBlock ? "" : cell}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="border border-green-700 p-4">
-              <p className="mb-4 text-xs uppercase text-green-500">Controls</p>
-
-              <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    className="border border-green-700 py-3 hover:border-green-400"
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <PlayGrid
+  type={isKakuro ? "kakuro" : "sudoku"}
+  initialGrid={grid}
+  solutionGrid={puzzle.solution_payload?.grid ?? []}
+  assignmentId={assignment.id}
+  puzzleId={puzzle.id}
+/>
       </div>
     </main>
   );
