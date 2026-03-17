@@ -1,15 +1,15 @@
 /*
-  CAT 2026 — Design System
+  CAT 2026 â€” Design System
   ========================
   Rationale: "Focused Instrument" aesthetic.
   
   Typography: DM Mono (metadata, timers, board numbers) + DM Sans (UI chrome).
-  DM Mono is designed at Reading — not a trendy pick, but mathematically precise
+  DM Mono is designed at Reading â€” not a trendy pick, but mathematically precise
   and immediately readable at small sizes. DM Sans complements it without
   competing. Together they feel like a well-engineered instrument panel.
   
   Color: Near-black base (#0C0C0D) with a single neon-lime accent (#A8FF57).
-  Not green, not teal — lime. It reads as signal, not decoration.
+  Not green, not teal â€” lime. It reads as signal, not decoration.
   One destructive accent (amber-gold). No decorative palette.
   
   Philosophy: Every pixel earns its place. The board is the hero.
@@ -20,7 +20,7 @@
 
 @import "tailwindcss";
 
-/* ─── TOKENS ──────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ TOKENS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 :root {
   /* Surfaces */
@@ -42,14 +42,14 @@
   --text-tertiary:  rgba(240, 240, 242, 0.30);
   --text-disabled:  rgba(240, 240, 242, 0.18);
 
-  /* Accent — Neon Lime */
+  /* Accent â€” Neon Lime */
   --accent:         #A8FF57;
   --accent-dim:     rgba(168, 255, 87, 0.15);
   --accent-glow:    rgba(168, 255, 87, 0.08);
   --accent-strong:  #C8FF88;
   --accent-text:    #1A3A00;
 
-  /* Warning/Destructive — Amber */
+  /* Warning/Destructive â€” Amber */
   --warn:           #FFB830;
   --warn-dim:       rgba(255, 184, 48, 0.12);
   --warn-text:      #3A2800;
@@ -103,7 +103,7 @@
   --dur-slow:    300ms;
 }
 
-/* ─── RESET & BASE ────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ RESET & BASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -129,7 +129,7 @@ body {
   background-size: 22px 22px;
 }
 
-/* ─── TYPOGRAPHY ──────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ TYPOGRAPHY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .font-ui   { font-family: var(--font-ui); }
 .font-mono { font-family: var(--font-mono); }
@@ -155,7 +155,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   color: var(--text-tertiary);
 }
 
-/* ─── SURFACE COMPONENTS ──────────────────────────────────────────────────── */
+/* â”€â”€â”€ SURFACE COMPONENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .card {
   background: var(--bg-raised);
@@ -176,7 +176,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   padding: var(--sp-6);
 }
 
-/* ─── BUTTONS ─────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .btn {
   display: inline-flex;
@@ -199,7 +199,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
 
 .btn:active { transform: scale(0.97); }
 
-/* Primary — accent fill */
+/* Primary â€” accent fill */
 .btn-primary {
   background: var(--accent);
   color: var(--accent-text);
@@ -211,7 +211,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   border-color: var(--accent-strong);
 }
 
-/* Secondary — outlined */
+/* Secondary â€” outlined */
 .btn-secondary {
   background: transparent;
   color: var(--text-primary);
@@ -222,7 +222,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   border-color: var(--border-muted);
 }
 
-/* Ghost — no border */
+/* Ghost â€” no border */
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -258,7 +258,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   text-transform: uppercase;
 }
 
-/* ─── TAGS / BADGES ───────────────────────────────────────────────────────── */
+/* â”€â”€â”€ TAGS / BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .tag {
   display: inline-flex;
@@ -297,7 +297,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   border-color: rgba(255,87,87,0.25);
 }
 
-/* ─── HEADER / NAV ────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ HEADER / NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .site-header {
   position: sticky;
@@ -337,7 +337,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
 .site-header .nav-link:hover { color: var(--text-primary); background: var(--bg-float); }
 .site-header .nav-link.active { color: var(--text-primary); }
 
-/* ─── HUD STRIP (play page) ───────────────────────────────────────────────── */
+/* â”€â”€â”€ HUD STRIP (play page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .hud-strip {
   display: flex;
@@ -382,7 +382,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
 .hud-value.accent { color: var(--accent); }
 .hud-value.warn   { color: var(--warn); }
 
-/* ─── SUDOKU GRID ─────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ SUDOKU GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .sudoku-grid {
   display: grid;
@@ -414,12 +414,12 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   aspect-ratio: 1;
 }
 
-/* 3x3 block borders — right */
+/* 3x3 block borders â€” right */
 .sudoku-cell:nth-child(3n):not(:nth-child(9n)) {
   border-right: 2px solid var(--border-muted);
 }
 
-/* 3x3 block borders — bottom (rows 3, 6) */
+/* 3x3 block borders â€” bottom (rows 3, 6) */
 .sudoku-cell:nth-child(n+19):nth-child(-n+27),
 .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
   border-bottom: 2px solid var(--border-muted);
@@ -490,7 +490,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   line-height: 1;
 }
 
-/* ─── NUMBER PAD ──────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ NUMBER PAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .numpad {
   display: grid;
@@ -533,7 +533,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   color: var(--warn);
 }
 
-/* ─── PUZZLE CARD (Today page) ────────────────────────────────────────────── */
+/* â”€â”€â”€ PUZZLE CARD (Today page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .puzzle-card {
   background: var(--bg-raised);
@@ -579,7 +579,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   color: var(--text-tertiary);
 }
 
-/* ─── STATS CARD (Progress page) ─────────────────────────────────────────── */
+/* â”€â”€â”€ STATS CARD (Progress page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .stat-card {
   background: var(--bg-float);
@@ -610,7 +610,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   color: var(--text-tertiary);
 }
 
-/* ─── PROGRESS BAR ────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ PROGRESS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .progress-track {
   height: 3px;
@@ -628,7 +628,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
 
 .progress-fill.warn { background: var(--warn); }
 
-/* ─── CONSISTENCY CALENDAR ────────────────────────────────────────────────── */
+/* â”€â”€â”€ CONSISTENCY CALENDAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .cal-grid {
   display: grid;
@@ -649,7 +649,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
 .cal-dot.missed   { background: var(--danger-dim); border-color: rgba(255,87,87,0.2); }
 .cal-dot.today    { box-shadow: 0 0 0 2px var(--border-muted); }
 
-/* ─── SUCCESS / FAILURE OVERLAYS ──────────────────────────────────────────── */
+/* â”€â”€â”€ SUCCESS / FAILURE OVERLAYS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .result-panel {
   background: var(--bg-float);
@@ -675,7 +675,7 @@ h3 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ─── UTILITIES ───────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ UTILITIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .divider {
   height: 1px;

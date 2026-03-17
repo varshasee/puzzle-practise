@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black text-green-400 flex items-center justify-center p-6">
+    <main className="min-h-screen bg-blue text-green-400 flex items-center justify-center p-6">
       <div className="w-full max-w-3xl border border-green-500 p-8">
         <p className="text-xs tracking-[0.3em] uppercase mb-4 text-green-500">
           CAT 2026 Practice System

@@ -9,6 +9,27 @@ type PuzzleCardProps = {
   slotType?: string;
 };
 
+const statusConfig = {
+  "Completed": {
+    label: "Completed",
+    className: "tag-accent",
+  },
+  "In Progress": {
+    label: "In Progress",
+    className: "tag-warn",
+  },
+  "Not Started": {
+    label: "Not Started",
+    className: "tag-muted",
+  },
+};
+
+const difficultyConfig = {
+  "Easy":   { color: "var(--accent)" },
+  "Medium": { color: "var(--warn)" },
+  "Hard":   { color: "var(--danger)" },
+};
+
 export function PuzzleCard({
   id,
   title,
@@ -17,34 +38,93 @@ export function PuzzleCard({
   status,
   slotType,
 }: PuzzleCardProps) {
+  const statusCfg = statusConfig[status];
+  const diffCfg = difficultyConfig[difficulty];
+  const isCompleted = status === "Completed";
+
   return (
-    <div className="border border-green-700 p-4 md:p-5">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="mb-2 flex flex-wrap gap-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-green-500">
-              {type}
-            </p>
-            {slotType ? (
-              <p className="text-xs uppercase tracking-[0.2em] text-green-300">
-                {slotType}
-              </p>
-            ) : null}
-          </div>
-
-          <h2 className="text-xl font-bold mb-2">{title}</h2>
-
-          <div className="flex flex-wrap gap-3 text-sm text-green-300">
-            <span>Difficulty: {difficulty}</span>
-            <span>Status: {status}</span>
-          </div>
+    <div
+      className="puzzle-card"
+      style={isCompleted ? {
+        borderColor: "rgba(168,255,87,0.35)",
+        background: "linear-gradient(135deg, #111114, rgba(168,255,87,0.02))"
+      } : {}}
+    >
+      {/* Top row: tags + status */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span className="tag tag-muted">{type}</span>
+          {slotType && (
+            <span className="tag tag-muted" style={{ color: "var(--text-tertiary)" }}>
+              {slotType}
+            </span>
+          )}
         </div>
+        <span className={`tag ${statusCfg.className}`}>{statusCfg.label}</span>
+      </div>
 
+      {/* Middle: title + meta */}
+      <div>
+        <div
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "17px",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+            marginBottom: "4px",
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "12px",
+            color: "var(--text-tertiary)",
+            display: "flex",
+            gap: "12px",
+          }}
+        >
+          <span style={{ color: diffCfg.color }}>{difficulty}</span>
+          <span>·</span>
+          <span>{slotType} slot</span>
+        </div>
+      </div>
+
+      {/* Bottom: progress bar + action */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className="progress-track" style={{ flex: 1 }}>
+          <div
+            className="progress-fill"
+            style={{
+              width: isCompleted ? "100%" : status === "In Progress" ? "50%" : "0%",
+              background: isCompleted ? "var(--accent)" : "var(--warn)",
+            }}
+          />
+        </div>
         <Link
           href={`/play?puzzle=${id}`}
-          className="inline-block border border-green-500 px-4 py-2 text-sm uppercase tracking-[0.2em] transition hover:bg-green-500 hover:text-black"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "var(--font-ui)",
+            fontSize: "12px",
+            fontWeight: 500,
+            height: "32px",
+            padding: "0 14px",
+            borderRadius: "var(--r-md)",
+            border: isCompleted
+              ? "1px solid var(--border-accent)"
+              : "1px solid var(--border-muted)",
+            color: isCompleted ? "var(--accent)" : "var(--text-primary)",
+            background: isCompleted ? "var(--accent-dim)" : "transparent",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
+            transition: "all 90ms ease",
+          }}
         >
-          Start
+          {isCompleted ? "Review" : status === "In Progress" ? "Continue" : "Start"}
         </Link>
       </div>
     </div>

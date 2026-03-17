@@ -1,31 +1,28 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { markAssignmentInProgress, submitAttempt } from "./actions";
+import { markAssignmentInProgress } from "./actions";
 import { PlayGrid } from "@/components/play-grid";
 
 type PlayPageProps = {
-  searchParams: Promise<{
-    puzzle?: string;
-  }>;
+  searchParams: Promise<{ puzzle?: string }>;
 };
 
 type AssignmentRow = {
   id: string;
   status: string;
   puzzle_id: string;
+  slot_type: string;
+  effective_difficulty: number;
 };
 
 type PuzzleRow = {
   id: string;
   puzzle_type: "sudoku" | "kakuro";
   difficulty_band: string;
-  grid_payload: {
-    grid: string[][];
-  };
-  solution_payload: {
-    grid: string[][];
-  };
+  difficulty_score: number;
+  grid_payload: { grid: string[][] };
+  solution_payload: { grid: string[][] };
 };
 
 export const dynamic = "force-dynamic";
@@ -36,44 +33,45 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const params = await searchParams;
   const assignmentId = params.puzzle;
-
-  if (!assignmentId) {
-    redirect("/today");
-  }
+  if (!assignmentId) redirect("/today");
 
   const { data: assignment, error: assignmentError } = await supabase
     .from("daily_assignments")
-    .select("id, status, puzzle_id")
+    .select("id, status, puzzle_id, slot_type, effective_difficulty")
     .eq("id", assignmentId)
     .eq("user_id", user.id)
     .maybeSingle<AssignmentRow>();
 
   if (assignmentError || !assignment) {
     return (
-      <main className="min-h-screen bg-black p-6 text-green-400">
-        <div className="mx-auto max-w-4xl border border-green-500 p-6">
-          <p className="mb-4 text-sm text-green-300">Assignment not found.</p>
-          <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
-            {JSON.stringify(
-              {
-                assignmentId,
-                userId: user.id,
-                assignmentError,
-                assignment,
-              },
-              null,
-              2
-            )}
-          </pre>
-          <Link href="/today" className="inline-block text-green-500">
-            Back to Today
-          </Link>
+      <main style={{ minHeight: "100vh", padding: "40px 24px" }}>
+        <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+          <div
+            style={{
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border-faint)",
+              borderRadius: "var(--r-xl)",
+              padding: "32px",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                color: "var(--danger)",
+                marginBottom: "16px",
+              }}
+            >
+              Assignment not found
+            </div>
+            <Link href="/today" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+              ← Back to Today
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -83,30 +81,36 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
 
   const { data: puzzle, error: puzzleError } = await supabase
     .from("puzzles")
-    .select("id, puzzle_type, difficulty_band, grid_payload, solution_payload")
+    .select("id, puzzle_type, difficulty_band, difficulty_score, grid_payload, solution_payload")
     .eq("id", assignment.puzzle_id)
     .maybeSingle<PuzzleRow>();
 
   if (puzzleError || !puzzle) {
     return (
-      <main className="min-h-screen bg-black p-6 text-green-400">
-        <div className="mx-auto max-w-4xl border border-green-500 p-6">
-          <p className="mb-4 text-sm text-green-300">Puzzle not found.</p>
-          <pre className="mb-4 whitespace-pre-wrap border border-green-700 p-4 text-xs text-green-300">
-            {JSON.stringify(
-              {
-                assignmentId,
-                puzzleId: assignment.puzzle_id,
-                puzzleError,
-                puzzle,
-              },
-              null,
-              2
-            )}
-          </pre>
-          <Link href="/today" className="inline-block text-green-500">
-            Back to Today
-          </Link>
+      <main style={{ minHeight: "100vh", padding: "40px 24px" }}>
+        <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+          <div
+            style={{
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border-faint)",
+              borderRadius: "var(--r-xl)",
+              padding: "32px",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                color: "var(--danger)",
+                marginBottom: "16px",
+              }}
+            >
+              Puzzle not found
+            </div>
+            <Link href="/today" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+              ← Back to Today
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -115,75 +119,80 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
   const isKakuro = puzzle.puzzle_type === "kakuro";
   const grid = puzzle.grid_payload?.grid ?? [];
 
+  const slotLabel =
+    assignment.slot_type === "warmup" ? "Warmup"
+    : assignment.slot_type === "timed" ? "Timed"
+    : assignment.slot_type === "challenge" ? "Challenge"
+    : "Recovery";
+
   return (
-    <main className="min-h-screen bg-black p-6 text-green-400">
-      <div className="mx-auto max-w-5xl border border-green-500 p-6">
-        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+    <main style={{ minHeight: "100vh", padding: "32px 24px" }}>
+      <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+
+        {/* Page header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "28px",
+          }}
+        >
           <div>
             <Link
               href="/today"
-              className="text-xs uppercase tracking-[0.3em] text-green-500 hover:text-green-300"
-            >
-              Back to Today
-            </Link>
-
-            <p className="mt-2 text-xs uppercase tracking-[0.3em] text-green-500">
-              Play
-            </p>
-
-            <h1 className="text-3xl font-bold">
-              {isKakuro ? "Kakuro Practice" : "Sudoku Practice"}
-            </h1>
-
-            <p className="mt-2 text-sm text-green-300">
-              Assignment: {assignment.id}
-            </p>
-            <p className="mt-1 text-sm text-green-300">
-              Difficulty: {puzzle.difficulty_band}
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="border border-green-700 px-4 py-2 text-xs uppercase"
-            >
-              Pause
-            </button>
-
-            <button
-              type="button"
-              className="border border-green-700 px-4 py-2 text-xs uppercase"
-            >
-              Reset
-            </button>
-
-            <form
-              action={async () => {
-                "use server";
-                await submitAttempt({
-                  assignmentId: assignment.id,
-                  puzzleId: puzzle.id,
-                });
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+                textDecoration: "none",
+                marginBottom: "8px",
               }}
             >
-              <button
-                type="submit"
-                className="border border-green-500 px-4 py-2 text-xs uppercase hover:bg-green-500 hover:text-black"
-              >
-                Submit
-              </button>
-            </form>
+              ← Today
+            </Link>
+            <h1
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "22px",
+                fontWeight: 500,
+                letterSpacing: "-0.3px",
+                color: "var(--text-primary)",
+                marginBottom: "4px",
+              }}
+            >
+              {isKakuro ? "Kakuro Practice" : "Sudoku Practice"}
+            </h1>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                color: "var(--text-tertiary)",
+                display: "flex",
+                gap: "8px",
+                alignItems: "center",
+              }}
+            >
+              <span className="tag tag-muted">{slotLabel}</span>
+              <span>·</span>
+              <span>Difficulty {puzzle.difficulty_band}</span>
+            </div>
           </div>
         </div>
 
+        {/* PlayGrid — handles timer, mistakes, HUD, submit internally */}
         <PlayGrid
-  type={isKakuro ? "kakuro" : "sudoku"}
-  initialGrid={grid}
-  solutionGrid={puzzle.solution_payload?.grid ?? []}
-  assignmentId={assignment.id}
-  puzzleId={puzzle.id}
-/>
+          type={isKakuro ? "kakuro" : "sudoku"}
+          initialGrid={grid}
+          solutionGrid={puzzle.solution_payload?.grid ?? []}
+          assignmentId={assignment.id}
+          puzzleId={puzzle.id}
+        />
       </div>
     </main>
   );
