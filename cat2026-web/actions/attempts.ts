@@ -4,7 +4,7 @@ import { createServerClient } from '@/lib/db/server';
 import { revalidatePath } from 'next/cache';
 
 export async function startAttempt(puzzleId: string) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
@@ -35,7 +35,7 @@ export async function saveAttemptProgress(
   state: Record<string, unknown>,
   elapsedSeconds: number
 ) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
@@ -57,7 +57,7 @@ export async function completeAttempt(
     final_state: Record<string, unknown>;
   }
 ) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
