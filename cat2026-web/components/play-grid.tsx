@@ -33,6 +33,7 @@ export function PlayGrid({
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [result, setResult] = useState<ResultState>({ kind: "idle" });
+  const [saveError, setSaveError] = useState<string | null>(null); // FIX: surface errors to UI
   const [isPending, startTransition] = useTransition();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const columnCount = useMemo(() => initialGrid[0]?.length ?? 0, [initialGrid]);
@@ -99,7 +100,6 @@ export function PlayGrid({
       return;
     }
 
-    // Check correctness immediately
     const correct = solutionGrid[row]?.[col];
     if (correct && String(num) !== String(correct)) {
       setMistakes((m) => m + 1);
@@ -110,7 +110,6 @@ export function PlayGrid({
         r.map((cell, ci) => (ri === row && ci === col ? String(num) : cell))
       )
     );
-    // Clear notes for this cell
     setNotes((prev) => { const n = { ...prev }; delete n[noteKey(row, col)]; return n; });
   }
 
@@ -144,6 +143,9 @@ export function PlayGrid({
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
+  // FIX: capture elapsed/mistakes in local consts before the async transition
+  // so the closure always reads the values at the moment of submission,
+  // not stale values that may have changed by the time the async runs.
   function handleSubmit() {
     if (!isFilled) return;
     const wrong = getWrongCells();
@@ -152,9 +154,22 @@ export function PlayGrid({
       return;
     }
     clearInterval(timerRef.current!);
-    setResult({ kind: "success", elapsed, mistakes });
+    const finalElapsed = elapsed;
+    const finalMistakes = mistakes;
+    setResult({ kind: "success", elapsed: finalElapsed, mistakes: finalMistakes });
+    setSaveError(null);
     startTransition(async () => {
-      await submitAttempt({ assignmentId, puzzleId, elapsedSeconds: elapsed, mistakesCount: mistakes });
+      try {
+        await submitAttempt({
+          assignmentId,
+          puzzleId,
+          elapsedSeconds: finalElapsed,
+          mistakesCount: finalMistakes,
+        });
+      } catch (err) {
+        console.error("submitAttempt failed:", err);
+        setSaveError(err instanceof Error ? err.message : "Failed to save — please go back and try again.");
+      }
     });
   }
 
@@ -182,13 +197,15 @@ export function PlayGrid({
     setSelected(null);
     setResult({ kind: "idle" });
     setPaused(false);
+    setSaveError(null);
   }
 
-  // ── Related cell highlight (sudoku only) ────────────────────────────────────
+  // ── Related cell highlight (sudoku only) ───────────────────────────────────
   function isRelated(row: number, col: number) {
     if (!selected || type !== "sudoku") return false;
     const { row: sr, col: sc } = selected;
-    if (row === sr && col === col) return false;
+    // FIX: original had `col === col` (always true) instead of `col === sc`
+    if (row === sr && col === sc) return false;
     return (
       row === sr ||
       col === sc ||
@@ -202,18 +219,26 @@ export function PlayGrid({
     return result.wrongCells.has(noteKey(row, col));
   }
 
-  // ── Performance label ──────────────────────────────────────────────────────
   function perfLabel(m: number) {
     if (m === 0) return "Clean solve — no mistakes.";
     if (m <= 2) return "Good solve — keep working on accuracy.";
     return "Review this puzzle type to reduce errors.";
   }
 
+  // ── FIX: blockRight/blockBottom operator precedence ────────────────────────
+  // Original: `type === "sudoku" && col === 2 || col === 5`
+  // evaluates as `(type === "sudoku" && col === 2) || col === 5`
+  // meaning col===5 always triggers the thick border regardless of puzzle type.
+  function getBlockBorder(type: string, row: number, col: number) {
+    const blockRight  = type === "sudoku" && (col === 2 || col === 5);
+    const blockBottom = type === "sudoku" && (row === 2 || row === 5);
+    return { blockRight, blockBottom };
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
 
-  const gridRows = type === "sudoku" ? 9 : initialGrid.length;
   const gridCols = type === "sudoku" ? 9 : columnCount;
 
   return (
@@ -232,7 +257,19 @@ export function PlayGrid({
         {[
           { label: "Time", value: formatTime(elapsed), color: "var(--accent)" },
           { label: "Mistakes", value: String(mistakes), color: mistakes > 0 ? "var(--warn)" : "var(--text-primary)" },
-          { label: "Filled", value: `${grid.flat().filter((c, i) => { const r = Math.floor(i / gridCols); const col = i % gridCols; return isPlayable(r, col) && c !== ""; }).length}/${grid.flat().filter((c, i) => { const r = Math.floor(i / gridCols); const col = i % gridCols; return isPlayable(r, col); }).length}`, color: "var(--text-primary)" },
+          {
+            label: "Filled",
+            value: `${grid.flat().filter((c, i) => {
+              const r = Math.floor(i / gridCols);
+              const col = i % gridCols;
+              return isPlayable(r, col) && c !== "";
+            }).length}/${grid.flat().filter((c, i) => {
+              const r = Math.floor(i / gridCols);
+              const col = i % gridCols;
+              return isPlayable(r, col);
+            }).length}`,
+            color: "var(--text-primary)",
+          },
           { label: "Mode", value: notesMode ? "Notes" : "Normal", color: notesMode ? "var(--warn)" : "var(--text-primary)" },
         ].map(({ label, value, color }) => (
           <div
@@ -248,26 +285,10 @@ export function PlayGrid({
               gap: "2px",
             }}
           >
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "8px",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-              }}
-            >
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
               {label}
             </span>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "18px",
-                fontWeight: 300,
-                letterSpacing: "-0.5px",
-                color,
-              }}
-            >
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "18px", fontWeight: 300, letterSpacing: "-0.5px", color }}>
               {value}
             </span>
           </div>
@@ -275,14 +296,8 @@ export function PlayGrid({
       </div>
 
       {/* ── Board + Controls ─────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 180px",
-          gap: "20px",
-          alignItems: "start",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 180px", gap: "20px", alignItems: "start" }}>
+
         {/* Board */}
         <div style={{ position: "relative" }}>
           <div
@@ -310,10 +325,7 @@ export function PlayGrid({
               const userFilled = playable && cell !== "";
               const cellNotes = notes[noteKey(row, col)];
               const hasNotes = cellNotes && cellNotes.size > 0 && cell === "";
-
-              // Block right border for 3x3 sections (sudoku)
-              const blockRight = type === "sudoku" && col === 2 || col === 5;
-              const blockBottom = type === "sudoku" && row === 2 || row === 5;
+              const { blockRight, blockBottom } = getBlockBorder(type, row, col); // FIX applied
 
               let bg = "var(--bg-raised)";
               if (isBlock) bg = "#0A0A0A";
@@ -395,55 +407,24 @@ export function PlayGrid({
           {paused && (
             <div
               style={{
-                position: "absolute",
-                inset: 0,
+                position: "absolute", inset: 0,
                 background: "rgba(12,12,13,0.95)",
                 backdropFilter: "blur(8px)",
                 borderRadius: "var(--r-lg)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "12px",
-                zIndex: 10,
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                gap: "12px", zIndex: 10,
               }}
             >
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "10px",
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                }}
-              >
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
                 Paused
               </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "48px",
-                  fontWeight: 300,
-                  color: "var(--text-secondary)",
-                  letterSpacing: "-2px",
-                }}
-              >
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "48px", fontWeight: 300, color: "var(--text-secondary)", letterSpacing: "-2px" }}>
                 {formatTime(elapsed)}
               </div>
               <button
                 onClick={() => setPaused(false)}
-                style={{
-                  background: "var(--accent)",
-                  color: "var(--accent-text)",
-                  border: "none",
-                  borderRadius: "var(--r-md)",
-                  padding: "0 20px",
-                  height: "36px",
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: "var(--r-md)", padding: "0 20px", height: "36px", fontFamily: "var(--font-ui)", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
               >
                 Resume
               </button>
@@ -454,14 +435,11 @@ export function PlayGrid({
           {result.kind === "success" && (
             <div
               style={{
-                position: "absolute",
-                inset: 0,
+                position: "absolute", inset: 0,
                 background: "rgba(12,12,13,0.92)",
                 backdropFilter: "blur(10px)",
                 borderRadius: "var(--r-lg)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: "flex", alignItems: "center", justifyContent: "center",
                 zIndex: 10,
               }}
             >
@@ -477,81 +455,40 @@ export function PlayGrid({
                   animation: "panelIn 280ms cubic-bezier(.16,1,.3,1) both",
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "32px",
-                    color: "var(--accent)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  ✓
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "20px",
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                    marginBottom: "4px",
-                  }}
-                >
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "32px", color: "var(--accent)", marginBottom: "8px" }}>✓</div>
+                <div style={{ fontFamily: "var(--font-ui)", fontSize: "20px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "4px" }}>
                   {result.mistakes === 0 ? "Clean Solve" : "Solved"}
                 </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "13px",
-                    color: "var(--text-secondary)",
-                    marginBottom: "20px",
-                    lineHeight: 1.5,
-                  }}
-                >
+                <div style={{ fontFamily: "var(--font-ui)", fontSize: "13px", color: "var(--text-secondary)", marginBottom: "20px", lineHeight: 1.5 }}>
                   {perfLabel(result.mistakes)}
                 </div>
 
                 {/* Stats */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "28px",
-                    marginBottom: "24px",
-                  }}
-                >
+                <div style={{ display: "flex", justifyContent: "center", gap: "28px", marginBottom: "24px" }}>
                   {[
                     { val: formatTime(result.elapsed), lbl: "Time" },
                     { val: String(result.mistakes), lbl: "Mistakes" },
                   ].map(({ val, lbl }) => (
                     <div key={lbl} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "22px",
-                          fontWeight: 300,
-                          letterSpacing: "-0.5px",
-                          color: "var(--accent)",
-                        }}
-                      >
-                        {val}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "9px",
-                          letterSpacing: "0.8px",
-                          textTransform: "uppercase",
-                          color: "var(--text-tertiary)",
-                        }}
-                      >
-                        {lbl}
-                      </span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "22px", fontWeight: 300, letterSpacing: "-0.5px", color: "var(--accent)" }}>{val}</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.8px", textTransform: "uppercase", color: "var(--text-tertiary)" }}>{lbl}</span>
                     </div>
                   ))}
                 </div>
 
+                {/* FIX: show save error if the server action failed */}
+                {saveError && (
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--danger)", marginBottom: "12px", padding: "8px", border: "1px solid rgba(255,87,87,0.3)", borderRadius: "var(--r-md)" }}>
+                    {saveError}
+                  </div>
+                )}
+
+                {/* FIX: router.refresh() before push so Today re-fetches from Supabase */}
                 <button
-                  onClick={() => router.push("/today")}
+                  onClick={() => {
+                    router.refresh();
+                    router.push("/today");
+                  }}
                   disabled={isPending}
                   style={{
                     background: "var(--accent)",
@@ -563,7 +500,7 @@ export function PlayGrid({
                     fontFamily: "var(--font-ui)",
                     fontSize: "13px",
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: isPending ? "wait" : "pointer",
                     width: "100%",
                     opacity: isPending ? 0.6 : 1,
                   }}
@@ -573,24 +510,12 @@ export function PlayGrid({
               </div>
             </div>
           )}
-
-          {/* Retry panel — shown below board, not as overlay */}
         </div>
 
         {/* Controls panel */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {/* Numpad */}
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: "8px",
-              }}
-            >
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: "8px" }}>
               Numbers
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "5px" }}>
@@ -599,29 +524,9 @@ export function PlayGrid({
                   key={n}
                   type="button"
                   onClick={() => enterNumber(n)}
-                  style={{
-                    aspectRatio: "1",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "18px",
-                    fontWeight: 300,
-                    color: "var(--text-primary)",
-                    background: "var(--bg-float)",
-                    border: "1px solid var(--border-faint)",
-                    borderRadius: "var(--r-md)",
-                    cursor: "pointer",
-                    transition: "all 90ms ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLButtonElement).style.background = "var(--bg-overlay)";
-                    (e.target as HTMLButtonElement).style.color = "var(--accent)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLButtonElement).style.background = "var(--bg-float)";
-                    (e.target as HTMLButtonElement).style.color = "var(--text-primary)";
-                  }}
+                  style={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-mono)", fontSize: "18px", fontWeight: 300, color: "var(--text-primary)", background: "var(--bg-float)", border: "1px solid var(--border-faint)", borderRadius: "var(--r-md)", cursor: "pointer", transition: "all 90ms ease" }}
+                  onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "var(--bg-overlay)"; (e.target as HTMLButtonElement).style.color = "var(--accent)"; }}
+                  onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "var(--bg-float)"; (e.target as HTMLButtonElement).style.color = "var(--text-primary)"; }}
                 >
                   {n}
                 </button>
@@ -629,18 +534,8 @@ export function PlayGrid({
             </div>
           </div>
 
-          {/* Mode toggle */}
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: "8px",
-              }}
-            >
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: "8px" }}>
               Mode
             </div>
             <div style={{ display: "flex", gap: "5px" }}>
@@ -651,20 +546,7 @@ export function PlayGrid({
                     key={m}
                     type="button"
                     onClick={() => setNotesMode(m === "Notes")}
-                    style={{
-                      flex: 1,
-                      height: "30px",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "9px",
-                      letterSpacing: "0.8px",
-                      textTransform: "uppercase",
-                      background: active ? "var(--accent-dim)" : "var(--bg-float)",
-                      border: active ? "1px solid var(--border-accent)" : "1px solid var(--border-faint)",
-                      borderRadius: "var(--r-md)",
-                      color: active ? "var(--accent)" : "var(--text-tertiary)",
-                      cursor: "pointer",
-                      transition: "all 90ms ease",
-                    }}
+                    style={{ flex: 1, height: "30px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.8px", textTransform: "uppercase", background: active ? "var(--accent-dim)" : "var(--bg-float)", border: active ? "1px solid var(--border-accent)" : "1px solid var(--border-faint)", borderRadius: "var(--r-md)", color: active ? "var(--accent)" : "var(--text-tertiary)", cursor: "pointer", transition: "all 90ms ease" }}
                   >
                     {m}
                   </button>
@@ -673,85 +555,21 @@ export function PlayGrid({
             </div>
           </div>
 
-          {/* Action buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <button
-              type="button"
-              onClick={clearSelected}
-              style={{
-                height: "30px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "0.8px",
-                textTransform: "uppercase",
-                background: "transparent",
-                border: "1px solid var(--border-faint)",
-                borderRadius: "var(--r-md)",
-                color: "var(--text-tertiary)",
-                cursor: "pointer",
-                transition: "all 90ms ease",
-              }}
-            >
+            <button type="button" onClick={clearSelected} style={{ height: "30px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.8px", textTransform: "uppercase", background: "transparent", border: "1px solid var(--border-faint)", borderRadius: "var(--r-md)", color: "var(--text-tertiary)", cursor: "pointer", transition: "all 90ms ease" }}>
               Clear cell
             </button>
-
-            <button
-              type="button"
-              onClick={() => setPaused((p) => !p)}
-              style={{
-                height: "30px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "0.8px",
-                textTransform: "uppercase",
-                background: "transparent",
-                border: "1px solid var(--border-faint)",
-                borderRadius: "var(--r-md)",
-                color: "var(--text-tertiary)",
-                cursor: "pointer",
-              }}
-            >
+            <button type="button" onClick={() => setPaused((p) => !p)} style={{ height: "30px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.8px", textTransform: "uppercase", background: "transparent", border: "1px solid var(--border-faint)", borderRadius: "var(--r-md)", color: "var(--text-tertiary)", cursor: "pointer" }}>
               {paused ? "Resume" : "Pause"}
             </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{
-                height: "30px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "0.8px",
-                textTransform: "uppercase",
-                background: "transparent",
-                border: "1px solid rgba(255,87,87,0.3)",
-                borderRadius: "var(--r-md)",
-                color: "var(--danger)",
-                cursor: "pointer",
-              }}
-            >
+            <button type="button" onClick={handleReset} style={{ height: "30px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.8px", textTransform: "uppercase", background: "transparent", border: "1px solid rgba(255,87,87,0.3)", borderRadius: "var(--r-md)", color: "var(--danger)", cursor: "pointer" }}>
               Reset
             </button>
-
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!isFilled || result.kind === "success"}
-              style={{
-                height: "38px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "10px",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-                background: isFilled ? "var(--accent)" : "var(--bg-float)",
-                border: isFilled ? "1px solid var(--accent)" : "1px solid var(--border-faint)",
-                borderRadius: "var(--r-md)",
-                color: isFilled ? "var(--accent-text)" : "var(--text-disabled)",
-                cursor: isFilled ? "pointer" : "not-allowed",
-                fontWeight: 600,
-                transition: "all 90ms ease",
-                marginTop: "4px",
-              }}
+              style={{ height: "38px", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "1px", textTransform: "uppercase", background: isFilled ? "var(--accent)" : "var(--bg-float)", border: isFilled ? "1px solid var(--accent)" : "1px solid var(--border-faint)", borderRadius: "var(--r-md)", color: isFilled ? "var(--accent-text)" : "var(--text-disabled)", cursor: isFilled ? "pointer" : "not-allowed", fontWeight: 600, transition: "all 90ms ease", marginTop: "4px" }}
             >
               Submit
             </button>
@@ -759,80 +577,31 @@ export function PlayGrid({
         </div>
       </div>
 
-      {/* ── Retry panel (below board) ──────────────────────────────────────── */}
+      {/* ── Retry panel ───────────────────────────────────────────────────── */}
       {result.kind === "retry" && (
         <div
-          style={{
-            marginTop: "16px",
-            background: "var(--bg-float)",
-            border: "1px solid rgba(255,184,48,0.3)",
-            borderRadius: "var(--r-xl)",
-            padding: "20px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            animation: "panelIn 280ms cubic-bezier(.16,1,.3,1) both",
-          }}
+          style={{ marginTop: "16px", background: "var(--bg-float)", border: "1px solid rgba(255,184,48,0.3)", borderRadius: "var(--r-xl)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", animation: "panelIn 280ms cubic-bezier(.16,1,.3,1) both" }}
         >
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "15px",
-                fontWeight: 500,
-                color: "var(--text-primary)",
-                marginBottom: "3px",
-              }}
-            >
-              Not quite
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "11px",
-                color: "var(--text-tertiary)",
-              }}
-            >
+            <div style={{ fontFamily: "var(--font-ui)", fontSize: "15px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "3px" }}>Not quite</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--text-tertiary)" }}>
               {result.wrongCells.size} cell{result.wrongCells.size !== 1 ? "s are" : " is"} incorrect — highlighted in red
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={handleKeepTrying}
-              style={{
-                height: "34px",
-                padding: "0 16px",
-                fontFamily: "var(--font-ui)",
-                fontSize: "12px",
-                fontWeight: 500,
-                background: "transparent",
-                border: "1px solid var(--border-muted)",
-                borderRadius: "var(--r-md)",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-              }}
+              style={{ height: "34px", padding: "0 16px", fontFamily: "var(--font-ui)", fontSize: "12px", fontWeight: 500, background: "transparent", border: "1px solid var(--border-muted)", borderRadius: "var(--r-md)", color: "var(--text-primary)", cursor: "pointer" }}
             >
               Keep trying
             </button>
             <button
               onClick={() => {
-                // Reveal solution
                 setGrid(solutionGrid.map((r) => r.map((c) => c)));
                 setResult({ kind: "idle" });
                 clearInterval(timerRef.current!);
               }}
-              style={{
-                height: "34px",
-                padding: "0 16px",
-                fontFamily: "var(--font-ui)",
-                fontSize: "12px",
-                background: "transparent",
-                border: "1px solid rgba(255,87,87,0.3)",
-                borderRadius: "var(--r-md)",
-                color: "var(--danger)",
-                cursor: "pointer",
-              }}
+              style={{ height: "34px", padding: "0 16px", fontFamily: "var(--font-ui)", fontSize: "12px", background: "transparent", border: "1px solid rgba(255,87,87,0.3)", borderRadius: "var(--r-md)", color: "var(--danger)", cursor: "pointer" }}
             >
               Reveal
             </button>

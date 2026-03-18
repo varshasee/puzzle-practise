@@ -35,7 +35,7 @@ export async function submitAttempt(input: {
 
   if (!user) throw new Error("Not authenticated");
 
-  // Write the attempt row with real timing and mistake data
+  // Write the attempt row
   const { error: attemptError } = await supabase.from("attempts").insert({
     user_id: user.id,
     puzzle_id: input.puzzleId,
@@ -60,7 +60,7 @@ export async function submitAttempt(input: {
 
   if (assignmentError) throw new Error(assignmentError.message);
 
-  // Upsert daily_stats so progress page reflects this immediately
+  // ── Daily stats ────────────────────────────────────────────────────────────
   const today = new Date().toLocaleDateString("en-CA");
 
   const { data: todayAssignments } = await supabase
@@ -70,7 +70,8 @@ export async function submitAttempt(input: {
     .eq("assignment_date", today);
 
   const assignedCount = todayAssignments?.length ?? 0;
-  const completedCount = todayAssignments?.filter((a) => a.status === "completed").length ?? 0;
+  const completedCount =
+    todayAssignments?.filter((a) => a.status === "completed").length ?? 0;
 
   const { data: todayAttempts } = await supabase
     .from("attempts")
@@ -79,23 +80,33 @@ export async function submitAttempt(input: {
     .gte("completed_at", `${today}T00:00:00`)
     .lte("completed_at", `${today}T23:59:59`);
 
-  const totalSeconds = todayAttempts?.reduce((sum, a) => sum + (a.elapsed_seconds ?? 0), 0) ?? 0;
-  const totalMistakes = todayAttempts?.reduce((sum, a) => sum + (a.mistakes_count ?? 0), 0) ?? 0;
+  const totalSeconds =
+    todayAttempts?.reduce((sum, a) => sum + (a.elapsed_seconds ?? 0), 0) ?? 0;
+  const totalMistakes =
+    todayAttempts?.reduce((sum, a) => sum + (a.mistakes_count ?? 0), 0) ?? 0;
   const attemptCount = todayAttempts?.length ?? 1;
-  const avgAccuracy = Math.max(0, Math.round(100 - (totalMistakes / attemptCount) * 10));
+  const avgAccuracy = Math.max(
+    0,
+    Math.round(100 - (totalMistakes / attemptCount) * 10)
+  );
 
-  // Compute streak by walking back through daily_stats
+  // ── Streak — FIX: select best_streak, and read it correctly ───────────────
   const { data: recentStats } = await supabase
     .from("daily_stats")
-    .select("stat_date, completed_count")
+    .select("stat_date, completed_count, best_streak") // ← added best_streak
     .eq("user_id", user.id)
     .order("stat_date", { ascending: false })
-    .limit(30);
+    .limit(60); // ← increased limit so long streaks don't get cut off
 
   let currentStreak = completedCount > 0 ? 1 : 0;
+
   if (recentStats && recentStats.length > 0) {
-    const doneSet = new Set(recentStats.filter((r) => r.completed_count > 0).map((r) => r.stat_date));
-    let cursor = new Date(today);
+    const doneSet = new Set(
+      recentStats
+        .filter((r) => r.completed_count > 0)
+        .map((r) => r.stat_date)
+    );
+    const cursor = new Date(today);
     cursor.setDate(cursor.getDate() - 1);
     while (true) {
       const ds = cursor.toISOString().slice(0, 10);
@@ -108,10 +119,12 @@ export async function submitAttempt(input: {
     }
   }
 
-  const existingBest = recentStats?.[0] ? Math.max(...(recentStats.map((r) => 0))) : 0;
+  // FIX: was Math.max(...recentStats.map(() => 0)) which always returned 0
+  const existingBest =
+    recentStats?.reduce((max, r) => Math.max(max, r.best_streak ?? 0), 0) ?? 0;
   const bestStreak = Math.max(currentStreak, existingBest);
 
-  await supabase
+  const { error: statsError } = await supabase
     .from("daily_stats")
     .upsert(
       {
@@ -126,4 +139,7 @@ export async function submitAttempt(input: {
       },
       { onConflict: "user_id,stat_date" }
     );
+
+  // FIX: upsert errors were silently ignored before
+  if (statsError) throw new Error(statsError.message);
 }
